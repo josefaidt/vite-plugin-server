@@ -1,6 +1,6 @@
-import express from "express";
-import { app } from "$app";
+import express from 'express'
+import { app } from '$server'
 
-const server = express();
-server.use(express.static("."));
-server.use(app);
+const server = express()
+server.use(express.static('.'))
+server.use(app)

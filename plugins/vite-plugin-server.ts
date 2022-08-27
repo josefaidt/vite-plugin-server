@@ -1,65 +1,69 @@
-import * as path from "node:path";
-import * as url from "node:url";
-import express from "express";
-import { build, type Plugin, type ResolvedConfig } from "vite";
+import * as path from 'node:path'
+import * as url from 'node:url'
+import express from 'express'
+import { build, type Plugin, type ResolvedConfig } from 'vite'
 
 export type VitePluginServerOptions = {
   /**
    * The path to the server file (express).
    * @default "./server.ts"
    */
-  server?: string;
-};
+  server?: string
+}
 
 export type ServerModule = {
-  app: express.Express;
-};
+  app: express.Express
+}
 
 export const VitePluginServer = (options?: VitePluginServerOptions): Plugin => {
-  const appFile = path.resolve(process.cwd(), options?.server ?? "./server.ts");
-  let config: ResolvedConfig;
+  const appFile = path.resolve(process.cwd(), options?.server ?? './server.ts')
+  let config: ResolvedConfig
 
   return {
-    name: "vite-plugin-server",
+    name: 'vite-plugin-server',
     configResolved: (c) => {
-      config = c;
+      config = c
     },
     configureServer: async (viteDevServer) => {
       viteDevServer.middlewares.use(async (req, res, next) => {
         try {
-          const mod = (await viteDevServer.ssrLoadModule(`/@fs/${appFile}`)) as ServerModule;
+          const mod = (await viteDevServer.ssrLoadModule(
+            `/@fs/${appFile}`
+          )) as ServerModule
 
           /**
            * Create the internal server wrapper
            */
-          const server = express();
+          const server = express()
           server.use((req, res, next) => {
             // @ts-expect-error
-            req.viteServer = viteDevServer;
-            next();
-          });
+            req.viteServer = viteDevServer
+            next()
+          })
 
-          server.use(mod.app);
+          server.use(mod.app)
           // @ts-expect-error - express.handle exists
-          server.handle(req as any, res);
+          server.handle(req as any, res)
           if (!res.writableEnded) {
-            next();
+            next()
           }
         } catch (error) {
-          viteDevServer.ssrFixStacktrace(error);
-          process.exitCode = 1;
-          next(error);
+          viteDevServer.ssrFixStacktrace(error)
+          process.exitCode = 1
+          next(error)
         }
-      });
+      })
     },
     writeBundle: async () => {
-      const entry = url.fileURLToPath(new url.URL("server.template.ts", import.meta.url));
+      const entry = url.fileURLToPath(
+        new url.URL('server.template.ts', import.meta.url)
+      )
 
       const server = {
         root: config.root,
         resolve: {
           alias: {
-            $app: appFile,
+            $server: appFile,
           },
         },
         build: {
@@ -75,9 +79,9 @@ export const VitePluginServer = (options?: VitePluginServerOptions): Plugin => {
             },
           },
         },
-      };
+      }
 
-      await build(server);
+      await build(server)
     },
-  };
-};
+  }
+}

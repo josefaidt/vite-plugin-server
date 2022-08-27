@@ -1,10 +1,10 @@
-import express from "express";
+import express from 'express'
 
-export const app = express();
-const api = express.Router();
+export const app = express()
+const api = express.Router()
 
-api.get("/hello", (req, res) => {
-  res.send("Hello world");
-});
+api.get('/hello', (req, res) => {
+  res.send('Hello world')
+})
 
-app.use("/api", api);
+app.use('/api', api)
