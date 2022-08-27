@@ -1,7 +1,7 @@
 import * as path from 'node:path'
 import * as url from 'node:url'
 import express from 'express'
-import { build, type Plugin, type ResolvedConfig } from 'vite'
+import { build, type Plugin, type ResolvedConfig, type UserConfig } from 'vite'
 
 export type VitePluginServerOptions = {
   /**
@@ -55,11 +55,14 @@ export const VitePluginServer = (options?: VitePluginServerOptions): Plugin => {
       })
     },
     writeBundle: async () => {
+      if (process.env.VITE_PLUGIN_SERVER_BUILD) return
+      process.env.VITE_PLUGIN_SERVER_BUILD = 'true'
+
       const entry = url.fileURLToPath(
         new url.URL('server.template.ts', import.meta.url)
       )
 
-      const server = {
+      const server: UserConfig = {
         root: config.root,
         resolve: {
           alias: {
@@ -67,7 +70,7 @@ export const VitePluginServer = (options?: VitePluginServerOptions): Plugin => {
           },
         },
         build: {
-          outDir: config.build.outDir,
+          outDir: path.resolve(config.root, config.build.outDir),
           ssr: true,
           rollupOptions: {
             input: {
